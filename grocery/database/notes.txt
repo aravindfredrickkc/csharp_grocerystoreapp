@@ -1,0 +1,622 @@
+login :
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace grocery_21cs1069
+{
+    public partial class Adminlogin : Form
+    {
+        public Adminlogin()
+        {
+            InitializeComponent();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (passtb.Text == " ")
+            {
+                MessageBox.Show("enter password");
+            }
+            else if(passtb.Text == "PASS") 
+            {
+                Employee employee = new Employee();
+                employee.Show();
+                this.Hide();
+            }
+            else
+            {
+                MessageBox.Show("wrong password");
+            }
+        }
+    }
+}
+
+login:
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace grocery_21cs1069
+{
+    public partial class Login : Form
+    {
+        public Login()
+        {
+            InitializeComponent();
+        }
+        public static string Employeename = "";
+        SqlConnection Con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\I5\Documents\GroceryDb.mdf;Integrated Security=True;Connect Timeout=30");
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+        Adminlogin obj = new Adminlogin();
+        obj.Show();
+        this.Hide();
+
+        }
+
+        private void Unametb_TextChanged(object sender, EventArgs e)
+        {
+          
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Con.Open();
+            SqlDataAdapter sda = new SqlDataAdapter("Select count(*) from EmployeeTable where Empname = '" + Unametb.Text + "' AND Emppass = '" + passtb.Text + "'", Con);
+            DataTable dt = new DataTable();
+            sda.Fill(dt);
+            if (dt.Rows[0][0].ToString() == "1")
+            {
+                Employeename = Unametb.Text;
+                billing ob = new billing();
+                ob.Show();
+                this.Hide();
+                Con.Close();
+            }
+            else
+            {
+                MessageBox.Show("wrong username and password");
+            }
+            Con.Close();
+        }
+
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+    }
+}
+items :
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace grocery_21cs1069
+{
+    public partial class items : Form
+    {
+        public items()
+        {
+            InitializeComponent();
+            populate();
+        }
+        SqlConnection Con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\I5\Documents\GroceryDb.mdf;Integrated Security=True;Connect Timeout=30");
+        private void populate()
+        {
+            Con.Open();
+            string query = "select * from ItemTable";
+            SqlDataAdapter sda = new SqlDataAdapter(query, Con);
+            SqlCommandBuilder builder = new SqlCommandBuilder(sda);
+            var ds = new DataSet();
+            sda.Fill(ds);
+            ItemDGV.DataSource = ds.Tables[0];
+            Con.Close();
+        }
+        private void clear()
+        {
+            Nametb.Text = "";
+            qtytb.Text = "";
+            pricetb.Text = "";
+            categorycb.SelectedIndex = -1;
+            key = 0;
+        }
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+        private void savebtn_Click(object sender, EventArgs e)
+        {
+            if (Nametb.Text == "" || qtytb.Text == "" || pricetb.Text == "" || categorycb.SelectedIndex == -1)
+            {
+                MessageBox.Show("missing info");
+
+            }
+            else
+            {
+                try
+                {
+                    Con.Open();
+                    SqlCommand cmd = new SqlCommand("Insert into ItemTable values('" + Nametb.Text + "','" + qtytb.Text + "','" + pricetb.Text + "','" + categorycb.SelectedItem.ToString() + "')", Con);
+                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("item saved successfully");
+                    Con.Close();
+                    populate();
+                    clear();
+                }
+                catch (Exception Ex)
+                {
+                    MessageBox.Show(Ex.Message);
+                }
+            }
+        }
+        int key = 0;
+        private void ItemDGV_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.RowIndex < ItemDGV.Rows.Count)
+            {
+                Nametb.Text = ItemDGV.Rows[e.RowIndex].Cells[1].Value?.ToString() ?? "";
+                qtytb.Text = ItemDGV.Rows[e.RowIndex].Cells[2].Value?.ToString() ?? "";
+                pricetb.Text = ItemDGV.Rows[e.RowIndex].Cells[3].Value?.ToString() ?? "";
+                categorycb.SelectedItem = ItemDGV.Rows[e.RowIndex].Cells[4].Value?.ToString() ?? "";
+
+                if (Nametb.Text == "")
+                {
+                    key = 0;
+                }
+                else
+                {
+                    key = Convert.ToInt32(ItemDGV.Rows[e.RowIndex].Cells[0].Value);
+                }
+            }
+        }
+
+        private void clearbtn_Click(object sender, EventArgs e)
+        {
+            clear();
+        }
+
+        private void deletebtn_Click(object sender, EventArgs e)
+        {
+            if (key == 0)
+            {
+                MessageBox.Show("select item to be deleted");
+
+            }
+            else
+            {
+                try
+                {
+                    Con.Open();
+                    string query = "delete from ItemTable where itid=" + key + ";";
+                    SqlCommand cmd = new SqlCommand(query, Con);
+                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("item deleted successfully");
+                    Con.Close();
+                    populate();
+                    clear();
+                }
+                catch (Exception Ex)
+                {
+                    MessageBox.Show(Ex.Message);
+                }
+            }
+        }
+
+        private void editbtn_Click(object sender, EventArgs e)
+        {
+            if (Nametb.Text == "" || qtytb.Text == "" || pricetb.Text == "" || categorycb.SelectedIndex == -1)
+            {
+                MessageBox.Show("select item to be updated");
+
+            }
+            else
+            {
+                try
+                {
+                    Con.Open();
+                    string query = "Update ItemTable set itname='" + Nametb.Text + "',itqty='" + qtytb.Text + "',itprice='" + pricetb.Text + "',itcat='" + categorycb.SelectedItem.ToString() + "' where itid = " + key + ";";
+                    SqlCommand cmd = new SqlCommand(query, Con);
+                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("item updated successfully");
+                    Con.Close();
+                    populate();
+                    clear();
+                }
+                catch (Exception Ex)
+                {
+                    MessageBox.Show(Ex.Message);
+                }
+            }
+        }
+
+        private void label10_Click(object sender, EventArgs e)
+        {
+            Login obj = new Login();
+            obj.Show();
+            this.Hide();
+        }
+    }
+}
+employees :
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace grocery_21cs1069
+{
+    public partial class Employee : Form
+    {
+        public Employee()
+        {
+            InitializeComponent();
+            populate();
+        }
+        SqlConnection Con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\I5\Documents\GroceryDb.mdf;Integrated Security=True;Connect Timeout=30");
+        private void populate()
+        {
+            Con.Open();
+            string query = "select * from EmployeeTable";
+            SqlDataAdapter sda = new SqlDataAdapter(query,Con);
+            SqlCommandBuilder builder = new SqlCommandBuilder(sda);
+            var ds = new DataSet();
+            sda.Fill(ds);
+            EmployeeDGV.DataSource = ds.Tables[0];
+            Con.Close();
+        }
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Empnametb_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Savebtn_Click(object sender, EventArgs e)
+        {
+            if(Empnametb.Text=="" ||  Empphonetb.Text=="" || Empaddtb.Text == "" || Emppasstb.Text == "")
+            {
+                MessageBox.Show("missing info");
+
+            }
+            else
+            {
+                try
+                {
+                    Con.Open();
+                    SqlCommand cmd = new SqlCommand("Insert into EmployeeTable values('" + Empnametb.Text + "','" + Empphonetb.Text + "','" + Empaddtb.Text + "','" + Emppasstb.Text + "')", Con);
+                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("employee saved successfully");
+                    Con.Close();
+                    populate();
+                    clear();
+                }catch(Exception Ex)
+                {
+                    MessageBox.Show(Ex.Message);
+                }
+            }
+        }
+        private void clear()
+        {
+            Empnametb.Text = "";
+            Emppasstb.Text = "";
+            Empaddtb.Text = "";
+            Empphonetb.Text = "";
+            key = 0;
+        }
+        private void Clearbtn_Click(object sender, EventArgs e)
+        {
+            clear();
+        }
+        int key = 0;
+        private void EmployeeDGV_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.RowIndex < EmployeeDGV.Rows.Count)
+            {
+                Empnametb.Text = EmployeeDGV.Rows[e.RowIndex].Cells[1].Value?.ToString() ?? "";
+                Empphonetb.Text = EmployeeDGV.Rows[e.RowIndex].Cells[2].Value?.ToString() ?? "";
+                Empaddtb.Text = EmployeeDGV.Rows[e.RowIndex].Cells[3].Value?.ToString() ?? "";
+                Emppasstb.Text = EmployeeDGV.Rows[e.RowIndex].Cells[4].Value?.ToString() ?? "";
+
+                if (Empnametb.Text == "")
+                {
+                    key = 0;
+                }
+                else
+                {
+                    key = Convert.ToInt32(EmployeeDGV.Rows[e.RowIndex].Cells[0].Value);
+                }
+            }
+        }
+
+        private void Deletebtn_Click(object sender, EventArgs e)
+        {
+            if (key == 0)
+            {
+                MessageBox.Show("select employee to be deleted");
+
+            }
+            else
+            {
+                try
+                {
+                    Con.Open();
+                    string query = "delete from EmployeeTable where Empid="+key+";";
+                    SqlCommand cmd = new SqlCommand(query, Con);
+                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("employee deleted successfully");
+                    Con.Close();
+                    populate();
+                    clear();
+                }
+                catch (Exception Ex)
+                {
+                    MessageBox.Show(Ex.Message);
+                }
+            }
+        }
+
+        private void Editbtn_Click(object sender, EventArgs e)
+        {
+            if (Empnametb.Text == "" || Empphonetb.Text == "" || Empaddtb.Text == "" || Emppasstb.Text == "")
+            {
+                MessageBox.Show("select employee to be updated");
+
+            }
+            else
+            {
+                try
+                {
+                    Con.Open();
+                    string query = "Update EmployeeTable set Empname='"+Empnametb.Text+"',Empphone='" +Empphonetb.Text+ "',Empadd='" +Empaddtb.Text+ "',Emppass='" +Emppasstb.Text+ "' where Empid = " + key + ";";
+                    SqlCommand cmd = new SqlCommand(query, Con);
+                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("employee updated successfully");
+                    Con.Close();
+                    populate();
+                    clear();
+                }
+                catch (Exception Ex)
+                {
+                    MessageBox.Show(Ex.Message);
+                }
+            }
+        }
+
+        private void label10_Click(object sender, EventArgs e)
+        {
+            Login obj = new Login();
+            obj.Show();
+            this.Hide();
+        }
+    }
+}
+billing :
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace grocery_21cs1069
+{
+    public partial class billing : Form
+    {
+        public billing()
+        {
+            InitializeComponent();
+            populate();
+        }
+        SqlConnection Con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\I5\Documents\GroceryDb.mdf;Integrated Security=True;Connect Timeout=30");
+        private void populate()
+        {
+            Con.Open();
+            string query = "select * from ItemTable";
+            SqlDataAdapter sda = new SqlDataAdapter(query, Con);
+            SqlCommandBuilder builder = new SqlCommandBuilder(sda);
+            var ds = new DataSet();
+            sda.Fill(ds);
+            ItemDGV.DataSource = ds.Tables[0];
+            Con.Close();
+        }
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
+        int n = 0 , grdtotal = 0,amount;
+        private void button1_Click(object sender, EventArgs e)
+        {
+            
+            if (itqtytb.Text == "" || Convert.ToInt32(itqtytb.Text) > stock || itnametb.Text == "")
+            {
+                MessageBox.Show("ENTER QUANTITY");
+            }
+            else
+            {
+                int total = Convert.ToInt32(itqtytb.Text)* Convert.ToInt32(itpricetb.Text);
+                DataGridViewRow newRow = new DataGridViewRow();
+                newRow.CreateCells(billDGV);
+                newRow.Cells[0].Value = n + 1;
+                newRow.Cells[1].Value = itnametb.Text;
+                newRow.Cells[2].Value = itpricetb.Text;
+                newRow.Cells[3].Value = itqtytb.Text;
+                newRow.Cells[4].Value = total;
+                billDGV.Rows.Add(newRow);
+                grdtotal = grdtotal + total;
+                amount = grdtotal;
+                TOTAL.Text = "Rs " + grdtotal;
+                n++;
+                reset();
+            }
+
+        }
+        private void updateitem()
+        {
+            try
+            {
+                Con.Open();
+                string query = "Update ItemTable set itqty='" + itqtytb.Text + " where itid = " + key + ";";
+                SqlCommand cmd = new SqlCommand(query, Con);
+                cmd.ExecuteNonQuery();
+                MessageBox.Show("item updated successfully");
+                Con.Close();
+                populate();
+                //clear();
+            }
+            catch (Exception Ex)
+            {
+                MessageBox.Show(Ex.Message);
+            }
+        }
+        private void label9_Click(object sender, EventArgs e)
+        {
+
+        }
+        private void reset()
+        {
+            itpricetb.Text = "";
+            itnametb.Text = "";
+            itqtytb.Text = "";
+            itclienttb.Text = "";
+        }
+
+        private void resetbtn_Click(object sender, EventArgs e)
+        {
+            reset();
+        }
+
+        String  Ename = "Ename";
+        int Eid = 1;
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (itclienttb.Text== "")
+            {
+                MessageBox.Show("missing info");
+
+            }
+            else
+            {
+                try
+                {
+                    Con.Open();
+                    SqlCommand cmd = new SqlCommand("Insert into BillTable values(" + Eid + ",'" + Ename + "','" + itclienttb.Text + "'," + amount + ")", Con);
+                    cmd.ExecuteNonQuery();
+                    MessageBox.Show("bill saved successfully");
+                    Con.Close();
+                    populate();
+                    //clear();
+                }
+                catch (Exception Ex)
+                {
+                    MessageBox.Show(Ex.Message);
+                }
+            }
+        }
+
+        private void billing_Load(object sender, EventArgs e)
+        {
+            employeebl.Text = Login.Employeename;
+        }
+
+        private void printDocument1_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
+        {
+
+        }
+
+        private void label10_Click(object sender, EventArgs e)
+        {
+            Login obj = new Login();
+            obj.Show();
+            this.Hide();
+        }
+
+        private void itclienttb_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        int stock = 0,key = 0;
+        private void ItemDGV_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.RowIndex < ItemDGV.Rows.Count)
+            {
+                itnametb.Text = ItemDGV.Rows[e.RowIndex].Cells[1].Value?.ToString() ?? "";
+                itpricetb.Text = ItemDGV.Rows[e.RowIndex].Cells[3].Value?.ToString() ?? "";
+                if (itnametb.Text == "")
+                {
+                    stock = 0;
+                    key = 0;
+                }
+                else
+                {
+                    stock = Convert.ToInt32(ItemDGV.Rows[e.RowIndex].Cells[2].Value);
+                    key = Convert.ToInt32(ItemDGV.Rows[e.RowIndex].Cells[0].Value);
+                }
+            }
+        }
+    }
+}
+
+
